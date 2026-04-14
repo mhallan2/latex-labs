@@ -1,0 +1,94 @@
+%! TEX root = main.tex
+\documentclass[a4paper,14pt]{extarticle}
+
+% --- 1. ЯЗЫК, ШРИФТЫ И ГЕОМЕТРИЯ ---
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english, russian]{babel}
+\usepackage{tempora}
+\usepackage[left=30mm, right=15mm, top=20mm, bottom=20mm]{geometry}
+
+% --- 2. ФОРМАТИРОВАНИЕ ТЕКСТА ---
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parindent}{1.25cm}
+\usepackage{titlesec}
+\titleformat{\section}{\bfseries\Large\centering}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\bfseries\large}{\thesubsection.}{0.5em}{}
+\usepackage{enumitem}
+
+% --- 3. ГРАФИКА И МАТЕМАТИКА ---
+\usepackage{graphicx}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage[table]{xcolor}
+\usepackage{float}
+
+% --- 4. ТАБЛИЦЫ ---
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{tabularray}
+\usepackage{caption}
+\captionsetup[table]{font=small}
+\captionsetup{justification=centering, labelsep=period}
+
+% --- 5. ОФОРМЛЕНИЕ КОДА (MINTED) ---
+\usepackage[outputdir=build]{minted}
+\usepackage{listings}
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{green!60!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    frame=none,
+    breaklines=true,
+    captionpos=b,
+    tabsize=4
+}
+
+\usepackage{tcolorbox}
+\definecolor{bg}{gray}{0.95}
+\tcbuselibrary{minted,breakable,xparse,skins}
+\DeclareTCBListing{mintedbox}{O{}m!O{}}{%
+  breakable=true,
+  listing engine=minted,
+  listing only,
+  minted language=#2,
+  minted style=default,
+  minted options={linenos,gobble=0,breaklines=true,breakafter=,,fontsize=\small,numbersep=8pt,#1},
+  boxsep=0pt,
+  left=25pt, right=0pt, top=3pt, bottom=3pt,
+  arc=5pt,
+  colback=bg,
+  colframe=orange!70,
+  enhanced,
+  overlay={%
+    \begin{tcbclipinterior}
+    \fill[orange!20!white] (frame.south west) rectangle ([xshift=20pt]frame.north west);
+    \end{tcbclipinterior}},
+  #3}
+
+\usepackage{relsize}
+
+% --- 6. ГИПЕРССЫЛКИ ---
+\usepackage[hidelinks]{hyperref}
+
+\begin{document}
+\include{title}
+\pagenumbering{gobble}
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+\setcounter{page}{2}
+\include{intro}
+\include{methodology}
+\include{implementation}
+\include{results}
+\include{conclusion}
+\include{biblio}
+\end{document}

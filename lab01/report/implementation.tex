@@ -1,0 +1,187 @@
+\section{Реализация}
+
+В данном разделе описывается программная реализация исследования на языке \textit{Python}.
+Весь код структурирован в виде Jupyter Notebook и разбит на логические блоки:
+предобработка данных, реализация методов отбора, оценка параметров выборки и симуляция.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Используемые библиотеки}
+
+Для реализации алгоритмов использовались следующие библиотеки:
+
+\begin{itemize}[noitemsep]
+    \item \texttt{numpy} --- векторизованные вычисления и генерация псевдослучайных чисел;
+    \item \texttt{pandas} --- загрузка, хранение и агрегация табличных данных;
+    \item \texttt{scipy.stats} --- квантили распределений Стьюдента и нормального;
+    \item \texttt{matplotlib} и \texttt{seaborn} --- визуализация результатов;
+    \item \texttt{functools.partial} --- частичное применение функций для единообразного вызова методов отбора.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Загрузка и предобработка данных}
+
+Исходные данные загружаются из файла Excel и сортируются по коду респондента. Для каждого респондента формируется метка страты как конкатенация его возрастной группы и пола:
+
+\begin{mintedbox}{python}
+df["Stratum"] = df["Возрастная група"] + "_" + df["Пол"]
+\end{mintedbox}
+
+Столбцы мастер-таблицы разбиваются на блоки: метаданные, оценки \textit{идеального} продукта, веса \textit{важности} параметров и оценки каждого из трeх брендов (Sony, JBL, Marshall).
+
+\begin{mintedbox}{python}
+data_cols = data.columns[METADATA_COLS:]
+chunks = np.split(data_cols, SECTIONS_COUNT)
+ideal_cols, imp_cols, *brand_col_groups = chunks
+\end{mintedbox}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Вычисление интегральных показателей по модели идеальной точки}
+
+Для каждого респондента и каждого бренда вычисляется интегральный балл отклонения от идеала по формуле~\ref{eq:integral_score} из раздела методологии.
+
+Реализация использует векторизованные операции \texttt{NumPy}:
+
+\begin{mintedbox}{python}
+for name in BRAND_NAMES:
+    brand_cols = brands[name]
+    score = (np.abs(ideal_col - df[brand_cols]) * imp_col).sum(axis=1)
+    all_scores.append(score)
+
+pop_scores = np.column_stack(all_scores)
+\end{mintedbox}
+
+Результатом является матрица \texttt{scores} размером $N \times 3$, где каждая строка соответствует респонденту, а столбцы --- трeм брендам. На еe основе вычисляются \textit{истинные} (генеральные) средние значения и определяется бренд, наиболее близкий к идеалу.
+
+\medskip
+\noindent Результаты по генеральной совокупности:
+
+\begin{table}[h!]
+\centering
+\begin{tblr}{
+    colspec = {|X[l]|X[c]|},
+    row{1} = {gray!30, font=\bfseries},
+    row{even} = {gray!10},
+    hlines,
+    vlines,
+}
+Бренд & Среднее отклонение от идеальной точки \\
+Sony     & 76{,}2565 \\
+JBL      & 76{,}3946 \\
+Marshall & 76{,}9517 \\
+\end{tblr}
+\caption{Генеральные средние по модели идеальной точки}
+\label{tab:general_means}
+\end{table}
+
+\noindent Бренд, наиболее близкий к идеалу --- \textbf{Sony}.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Реализация методов отбора}
+
+Для уменьшения времени выполнения кода в дальнейшем было решено реализовать функции отбора таким образом, чтобы они возвращали индексы строк из таблицы, а не сами строки.
+
+Несмотря на то что \textit{механический} отбор подразумевает только бесповторный характер, для унификации все функции отбора обладают тремя обязательными общими параметрами: \texttt{n} --- желаемым объемом выборки, \texttt{replace}~--- характером отбора (повторный или бесповторный) и \texttt{seed} --- зерном для воспроизводимости результатов (в случае \textit{механического} отбора этот параметр назван \texttt{start\_iter} --- начальная точка отсчета).
+
+\subsubsection*{Случайный отбор}
+
+Выборка формируется с помощью генератора псевдослучайных чисел\\
+\texttt{numpy.random.default\_rng} путeм случайного выбора $n$ индексов из генеральной совокупности (с повторением или без):
+
+\begin{mintedbox}{python}
+def sample_random(n_total: int, n: int, replace: bool, seed: int) -> np.ndarray:
+    indices_random = np.random.default_rng(seed).choice(n_total, size=n, replace=replace)
+    return indices_random
+\end{mintedbox}
+
+\subsubsection*{Механический отбор}
+
+Элементы отбираются через равный шаг $k = \lfloor N / n \rfloor$, начиная с фиксированной стартовой позиции в середине массива. Данный метод поддерживает только бесповторный способ (несмотря на параметр \texttt{replace} --- он ни на что не влияет):
+
+\begin{mintedbox}{python}
+def sample_mechanical(n_total: int, n: int, replace: bool = False, start_iter: int = 0) -> np.ndarray:
+    k = N_TOTAL // n
+    start = N_TOTAL // 2 + start_iter
+    indices_mech = (start + np.arange(n) * k) % n_total
+    return indices_mech
+\end{mintedbox}
+
+\subsubsection*{Типический (стратифицированный) отбор}
+
+Генеральная совокупность предварительно разбита на страты по \\
+поло-возрастному признаку. Из каждой страты случайным образом отбирается количество
+элементов, пропорциональное еe доле в совокупности:
+
+\clearpage
+
+\begin{mintedbox}{python}
+def sample_typical(stratum_weights: dict, n: int, replace: bool, seed: int, get_strats: bool = False):
+    rng = np.random.default_rng(seed)
+    parts = []
+    
+    for s, w in stratum_weights.items():
+        pool = strata_groups[s]
+        n_s = max(1, round(n * w))
+        n_s = n_s if replace else min(n_s, len(pool))
+        parts.append(rng.choice(pool, size=n_s, replace=replace))
+
+    indices_typ = np.concatenate(parts)
+
+    if not get_strats:
+        return indices_typ
+    
+    return indices_typ, parts
+\end{mintedbox}
+
+\subsubsection*{Кластерный отбор}
+
+Единицей отбора выступает кластер (станция). Количество отбираемых кластеров вычисляется исходя из средней наполненности кластера. Затем случайным образом выбираются $r$ кластеров, и все входящие в них респонденты включаются в выборку:
+
+\begin{mintedbox}{python}
+def sample_cluster(cluster_keys: list, n: int, replace: bool, seed: int, get_clusters: bool = False):
+    rng = np.random.default_rng(seed)
+    r = round(n / AVG_PEOPLE_PER_CLUSTER)
+    r = r if replace else min(r, len(cluster_keys))
+    
+    chosen_clusters = rng.choice(cluster_keys, size=r, replace=replace)
+    selected = [cluster_groups[c] for c in chosen_clusters]
+    indices_cluster = np.concatenate(selected)
+
+    if not get_clusters:
+        return indices_cluster
+
+    return indices_cluster, selected
+\end{mintedbox}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Оценка дисперсий разведочной выборки}
+
+На основе разведочной выборки объeма\footnote{Согласно техническому заданию объем разведочной совокупности принимается равным $4\%$ от генеральной совокупности.} оцениваются дисперсии, соответствующие каждому методу отбора):
+
+\begin{itemize}
+    \item \textbf{Случайный и механический} --- общая выборочная дисперсия~\eqref{eq:var},
+    \item \textbf{Типический} --- средняя из внутригрупповых дисперсий страт~\eqref{eq:var_within_mean},
+    \item \textbf{Кластерный} --- межгрупповая дисперсия средних по кластерам~\eqref{eq:var_between}.
+\end{itemize}
+
+\begin{mintedbox}{python}
+leader_scores = pop_scores[:, best_brand]
+
+# Случайный
+idx_rnd = methods["Случайный"](N_SAMPLE, True, SEED)
+var_rnd = leader_scores[idx_rnd].var(ddof=1)
+
+# Механический
+idx_mech = methods["Механический"](N_SAMPLE, False, SEED)
+var_mech = leader_scores[idx_mech].var(ddof=1)
+
+# Типический
+idx_typ, parts = methods["Типический"](N_SAMPLE, True, SEED, get_strats=True)
+sizes = np.array([len(p) for p in parts])
+variances = np.array([leader_scores[p].var(ddof=1) for p in parts])
+var_typ = np.average(variances, weights=sizes)
+
+# Кластерный
+idx_clst, selected = methods["Кластерный"](N_SAMPLE, True, SEED, get_clusters=True)
+cluster_means = np.array([leader_scores[p].mean() for p in selected])
+var_clst = np.var(cluster_means)
+\end{mintedbox}
