@@ -16,12 +16,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Compile LaTeX
-        # Используем latexmk, он сам прогонит нужное количество раз для ссылок и оглавления
+        # Оставляем -outdir=build, чтобы не мусорить в корне
         run: |
           latexmk -pdf -shell-escape -outdir=build main.tex
+
+      - name: Move PDF to root
+        # Копируем файл из папки build в текущую папку (корень)
+        run: cp build/main.pdf ./main.pdf
 
       - name: Upload PDF report
         uses: actions/upload-artifact@v4
         with:
           name: lab-report
-          path: build/main.pdf
+          # Теперь путь ведет на файл в корне
+          path: main.pdf
