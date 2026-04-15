@@ -10,7 +10,7 @@ jobs:
   build_latex:
     runs-on: ubuntu-latest
     container:
-      image: danteev/texlive-full:latest
+      image: islandoftex/texlive:latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
