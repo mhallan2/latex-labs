@@ -1,0 +1,54 @@
+%! TEX root = main.tex
+\documentclass[a4paper,14pt]{extarticle}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{tempora}
+\usepackage[left=30mm, right=15mm, top=20mm, bottom=20mm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parindent}{1.25cm}
+\usepackage{titlesec}
+\titleformat{\section}{\bfseries\Large\centering}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\bfseries\large}{\thesubsection.}{0.5em}{}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage[table]{xcolor}
+\usepackage{float}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{tabularray}
+\usepackage{caption}
+\captionsetup[table]{font=small}
+\captionsetup{justification=centering, labelsep=period}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{bg}{gray}{0.95}
+\lstset{basicstyle=\ttfamily\small, breaklines=true, frame=none, tabsize=4}
+\newtcolorbox{codebox}{colback=bg,colframe=orange!70,arc=5pt,boxrule=0.8pt,left=4pt,right=4pt,top=4pt,bottom=4pt}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+
+\input{sections/title}
+
+\pagenumbering{gobble}
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+\setcounter{page}{2}
+
+\input{sections/introduction}
+\input{sections/methodology}
+\input{sections/implementation}
+\input{sections/results}
+\input{sections/conclusion}
+\input{sections/references}
+
+\end{document}

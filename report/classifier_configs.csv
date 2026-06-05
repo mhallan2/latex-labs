@@ -1,0 +1,21 @@
+config,C,class_weight,micro_precision,accuracy
+predicted_states + causes + community,3.0,,0.585263,0.585263
+predicted_states + causes + sphere + community,10.0,,0.581053,0.581053
+predicted_states + causes,0.3,,0.581053,0.581053
+predicted_states + causes + community,10.0,,0.581053,0.581053
+predicted_states + causes + sphere + community,3.0,,0.581053,0.581053
+predicted_states + causes,3.0,,0.578947,0.578947
+predicted_states + causes + community,1.0,,0.578947,0.578947
+predicted_states + causes,0.1,,0.576842,0.576842
+predicted_states + causes + community,0.1,,0.576842,0.576842
+predicted_states + causes,1.0,,0.574737,0.574737
+causes + sphere + community,0.3,,0.574737,0.574737
+predicted_states + causes + sphere + community,1.0,,0.574737,0.574737
+predicted_states + causes + community,0.3,,0.572632,0.572632
+causes + sphere + community,1.0,,0.572632,0.572632
+predicted_states,0.3,,0.572632,0.572632
+predicted_states,1.0,,0.572632,0.572632
+predicted_states + causes + sphere + community,0.3,,0.570526,0.570526
+predicted_states,0.1,balanced,0.570526,0.570526
+predicted_states + causes + sphere + community,0.1,,0.570526,0.570526
+predicted_states + causes + sphere,0.1,,0.570526,0.570526
